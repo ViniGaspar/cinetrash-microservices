@@ -83,12 +83,10 @@ erDiagram
     RANKED_MOVIES {
         bigint id PK
         bigint movie_id UK
-        varchar external_id
+        bigint external_id
         varchar title
         varchar poster_path
         int release_year
-        int badness_count
-        timestamp last_vote_at
     }
     VOTES {
         bigint id PK

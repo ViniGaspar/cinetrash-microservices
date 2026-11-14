@@ -124,8 +124,9 @@ Java 21, módulos listados.
 | title         | VARCHAR(255)  |                                        |
 | poster_path   | VARCHAR(512)  |                                        |
 | release_year  | INT           |                                        |
-| badness_count | INT           | default 0                              |
-| last_vote_at  | TIMESTAMP NULL| último voto (desempate)                |
+
+> Sem coluna de contador: a contagem de ruindade é calculada por agregação sobre `votes`
+> (`COUNT(*)`), e o desempate usa `MAX(voted_at)`.
 
 `votes`:
 
@@ -142,8 +143,9 @@ Java 21, módulos listados.
 
 ### catalog-service (`/catalog`)
 
-- `GET /catalog/movies/search?query={nome}` → lista de filmes do TMDB
-  - Response: `[{ externalId, title, posterPath, releaseYear }]`
+- `GET /catalog/movies/search?query={nome}&page={n}` → lista de filmes do TMDB (default page=1)
+  - Response: `{ page, totalPages, totalResults, results: [{ externalId, title, posterPath, releaseYear }] }`
+- Swagger/OpenAPI: `http://localhost:8080/{serviço}/swagger-ui.html` (por serviço)
 - `POST /catalog/movies` body `{ "externalId": "123" }` → registra filme (idempotente por externalId)
   - Response: `{ id, externalId, title, posterPath, releaseYear }`
 - `GET /catalog/movies/random-pair` → dois filmes distintos aleatórios do banco

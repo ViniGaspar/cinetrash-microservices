@@ -66,24 +66,24 @@ antes de notificar o ranking, garantindo dados consistentes.
 
 ### RN-14 — Upsert de filme no ranking
 Ao receber um voto, o ranking-service faz upsert em `ranked_movies` por `movie_id` (id interno
-do catálogo): se não existir, cria com os dados recebidos e `badness_count = 0`; se existir,
-atualiza `title`, `posterPath`, `releaseYear`, `externalId` (caso tenham mudado).
+do catálogo): se não existir, cria com os dados recebidos (title, posterPath, releaseYear,
+externalId); se existir, atualiza esses campos (caso tenham mudado). Não há coluna de contador.
 
-### RN-15 — Incremento de ruindade
-A cada voto, incrementar `badness_count` em 1 e atualizar `last_vote_at` para o momento do voto.
+### RN-15 — Registro do voto
+A cada voto, inserir um registro em `votes` (`id`, `movie_id` → FK lógica para `ranked_movies.id`,
+`voted_at` default now). A contagem de ruindade é derivada por agregação (`COUNT(*)`).
 
 ### RN-16 — Histórico de votos
-Inserir um registro em `votes` (`id`, `movie_id` → FK lógica para `ranked_movies.id`, `voted_at`)
-para cada voto recebido, permitindo auditoria e recontagem.
+A tabela `votes` é a fonte de verdade da contagem; permite auditoria e recontagem a qualquer momento.
 
 ### RN-17 — Transação
-Upsert + incremento + insert de voto devem ocorrer em uma única transação (`@Transactional`).
+Upsert em `ranked_movies` + insert em `votes` devem ocorrer em uma única transação (`@Transactional`).
 Se qualquer passo falhar, rollback total.
 
 ### RN-18 — Top 10 piores
-`GET /ranking/top10` retorna os 10 filmes com maior `badness_count`, ordenados por:
-1. `badness_count` DESC
-2. `last_vote_at` DESC (desempate: voto mais recente primeiro)
+`GET /ranking/top10` agrega `votes` por filme e retorna os 10 com maior contagem, ordenados por:
+1. `COUNT(votes)` DESC
+2. `MAX(votes.voted_at)` DESC (desempate: voto mais recente primeiro)
 
 ### RN-19 — Limite
 Retornar no máximo 10 registros. Se houver menos de 10 filmes votados, retornar todos.
@@ -124,12 +124,35 @@ Erros retornados em formato `ProblemDetail` (RFC 7807) com `title`, `status`, `d
 - 409 Conflict: batalha já votada, (opcional) filme duplicado
 - 500 Internal Server Error: falha inesperada no sorteio/comunicação
 
-## 7. Perguntas em aberto
+## 7. Perguntas respondidas
 
-1. Remover/editar filme do catálogo?
-2. Batalha persistida ou em memória?
-3. Versionamento de API (`/v1/...`)?
-4. Swagger/OpenAPI por serviço?
-5. Idempotência de voto em caso de retry (evitar duplo incremento)?
-6. Ranking deve exibir total global de votos?
-7. Paginação na busca TMDB (hoje retorna primeira página)?
+1. Remover/editar filme do catálogo? **Não** — sem endpoints de update/delete.
+2. Batalha persistida ou em memória? **Persistida** (tabela `battles`).
+3. Versionamento de API (`/v1/...`)? **Não** — rotas sem versão.
+4. Swagger/OpenAPI por serviço? **Sim** — SpringDoc em cada serviço (rota `/swagger-ui.html`).
+5. Idempotência de voto em caso de retry? **Não** — cada chamada incrementa (sem dedup por chave de idempotência).
+6. Ranking deve exibir total global de votos? **Não** — apenas top 10 piores.
+7. Paginação na busca TMDB? **Primeira página por padrão (20 resultados)**; expor parâmetro opcional `page` (default 1) para navegar páginas do TMDB. Sem paginação no lado do cliente além disso.
+
+## 8. Regras derivadas das respostas
+
+### RN-27 — Sem update/delete no catálogo
+Não existem endpoints `PUT/PATCH/DELETE` para filmes. Apenas busca, registro e listagem.
+
+### RN-28 — Batalha persistida
+Toda batalha é persistida em `battle_db.battles`. Não há estado em memória.
+
+### RN-29 — Sem versionamento
+Rotas não incluem `/v1`. Ex.: `/catalog/movies`, `/battles`, `/ranking/top10`.
+
+### RN-30 — Swagger habilitado
+Cada serviço expõe OpenAPI em `/swagger-ui.html` e `/v3/api-docs`.
+
+### RN-31 — Sem idempotência de voto
+Retry de `POST /battles/{id}/vote` pode gerar duplo voto/incremento. (Se a batalha já estiver votada, RN-11 retorna 409, evitando novo incremento apenas nesse caso.)
+
+### RN-32 — Sem total global
+`/ranking/top10` retorna apenas os 10 piores; não há endpoint de total global.
+
+### RN-33 — Paginação da busca TMDB
+`GET /catalog/movies/search?query=...&page=1` (default `page=1`). Repassa `page` ao TMDB e retorna a página correspondente (até 20 resultados) junto com metadados de paginação (`page`, `totalPages`, `totalResults`).

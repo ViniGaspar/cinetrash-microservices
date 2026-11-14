@@ -259,19 +259,6 @@ public class RankedMovie {
   @Column(nullable=false) private String title;
   @Column(name="poster_path") private String posterPath;
   @Column(name="release_year") private Integer releaseYear;
-  @Column(name="badness_count") private int badnessCount = 0;
-  @Column(name="last_vote_at") private LocalDateTime lastVoteAt;
-}
-```
-
-`Vote`:
-```java
-@Entity @Table(name="votes")
-public class Vote {
-  @Id @GeneratedValue(strategy=GenerationType.IDENTITY) private Long id;
-  @Column(name="movie_id") private Long movieId; // FK lógica para ranked_movies.id
-  @Column(name="voted_at") private LocalDateTime votedAt;
-  @PrePersist void pre(){ votedAt = LocalDateTime.now(); }
 }
 ```
 
@@ -279,8 +266,16 @@ public class Vote {
 ```java
 public interface RankedMovieRepository extends JpaRepository<RankedMovie, Long> {
   Optional<RankedMovie> findByMovieId(Long movieId);
-  @Query("SELECT r FROM RankedMovie r ORDER BY r.badnessCount DESC, r.lastVoteAt DESC")
-  List<RankedMovie> findTop10(Pageable pageable); // PageRequest.of(0,10)
+}
+
+public interface VoteRepository extends JpaRepository<Vote, Long> {
+  @Query("""
+    SELECT rm, COUNT(v.id) AS cnt, MAX(v.votedAt) AS lastVote
+    FROM RankedMovie rm JOIN Vote v ON v.movieId = rm.id
+    GROUP BY rm
+    ORDER BY cnt DESC, lastVote DESC
+  """)
+  List<Object[]> findTop10(Pageable pageable); // PageRequest.of(0,10)
 }
 ```
 
@@ -289,10 +284,8 @@ public interface RankedMovieRepository extends JpaRepository<RankedMovie, Long> 
 @Transactional
 public void registerVote(VoteRequest req) {
   RankedMovie rm = repo.findByMovieId(req.getMovieId())
-      .orElseGet(() -> new RankedMovie(req)); // popula dados
-  rm.setBadnessCount(rm.getBadnessCount() + 1);
-  rm.setLastVoteAt(LocalDateTime.now());
-  rm = repo.save(rm);
+      .orElseGet(() -> new RankedMovie(req)); // popula dados (title, poster, year, externalId)
+  rm = repo.save(rm); // upsert (title/poster podem ter mudado)
   Vote v = new Vote();
   v.setMovieId(rm.getId());
   voteRepo.save(v);
@@ -305,6 +298,7 @@ public void registerVote(VoteRequest req) {
 public class RankingController {
   @PostMapping("/votes") public ResponseEntity<Void> vote(@RequestBody @Valid VoteRequest req) { service.registerVote(req); return ResponseEntity.status(201).build(); }
   @GetMapping("/top10") public List<RankedMovieDto> top10() { return service.top10(); }
+  // RankedMovieDto agora inclui badnessCount (calculado via COUNT de votes) e lastVoteAt (MAX de votes).
 }
 ```
 
