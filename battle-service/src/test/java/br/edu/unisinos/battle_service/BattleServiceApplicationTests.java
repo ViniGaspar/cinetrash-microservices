@@ -1,0 +1,13 @@
+package br.edu.unisinos.battle_service;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class BattleServiceApplicationTests {
+
+	@Test
+	void contextLoads() {
+	}
+
+}
