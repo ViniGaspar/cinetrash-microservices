@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import br.edu.unisinos.battle_service.dto.MovieDTO;
 import br.edu.unisinos.battle_service.dto.RandomPairResponseDTO;
-import br.edu.unisinos.battle_service.model.CatalogMock;
 
 @FeignClient(name = "CATALOG-SERVICE")
 public interface CatalogClient {
