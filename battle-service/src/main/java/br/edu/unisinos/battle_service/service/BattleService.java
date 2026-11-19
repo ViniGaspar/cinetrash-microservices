@@ -10,6 +10,7 @@ import br.edu.unisinos.battle_service.client.RankingClient;
 import br.edu.unisinos.battle_service.command.BattleCommand;
 import br.edu.unisinos.battle_service.command.BattleCommandHistory;
 import br.edu.unisinos.battle_service.command.VoteBattleCommand;
+import br.edu.unisinos.battle_service.dto.BattleInfoDTO;
 import br.edu.unisinos.battle_service.dto.BattleResponseDTO;
 import br.edu.unisinos.battle_service.dto.RandomPairResponseDTO;
 import br.edu.unisinos.battle_service.dto.UndoResponseDTO;
@@ -61,7 +62,17 @@ public class BattleService {
 		return new UndoResponseDTO(undone, commandHistory.size());
 	}
 	
-	public List<Battle> getAll() {
-		return battleRepository.findAll();
+	public List<BattleInfoDTO> getAll() {
+		return battleRepository.findAllByOrderByIdAsc()
+							   .stream()
+							   .map(b -> new BattleInfoDTO(
+									   b.getId(),
+				                       b.getMovieAId(),
+				                       b.getMovieBId(),
+				                       b.getChosenMovieId(),
+				                       b.getCreatedAt(),
+				                       b.getVotedAt()
+							   ))
+							   .toList();
 	}
 }

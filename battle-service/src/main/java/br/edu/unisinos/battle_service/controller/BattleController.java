@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.edu.unisinos.battle_service.dto.BattleInfoDTO;
 import br.edu.unisinos.battle_service.dto.BattleResponseDTO;
 import br.edu.unisinos.battle_service.dto.UndoResponseDTO;
 import br.edu.unisinos.battle_service.dto.VoteRequestDTO;
@@ -23,7 +24,7 @@ public class BattleController {
 	private BattleService service;
 	
 	@GetMapping
-	public List<Battle> getAll() {
+	public List<BattleInfoDTO> getAll() {
 		return service.getAll();
 	}
 	
