@@ -1,0 +1,57 @@
+### catalog-service — chamadas de exemplo
+### Use com a extensão "REST Client" do VS Code (humao.rest-client): clique em "Send Request" acima de cada chamada.
+### @gateway passa pelo gateway (8080); troque por @direct para chamar o serviço direto (8081).
+
+@gateway = http://localhost:8080
+@direct = http://localhost:8081
+@base = {{gateway}}
+
+### Buscar filmes no TMDB por nome (page é opcional, default 1)
+GET {{base}}/catalog/movies/search?query=matrix&page=1
+
+### Cadastrar filme pelo id do TMDB -> 201 na primeira vez, 200 se já existir
+POST {{base}}/catalog/movies
+Content-Type: application/json
+
+{
+  "externalId": 603
+}
+
+### Cadastrar um segundo filme (Sharknado)
+POST {{base}}/catalog/movies
+Content-Type: application/json
+
+{
+  "externalId": 205321
+}
+
+### Listar todos os filmes cadastrados
+GET {{base}}/catalog/movies
+
+### Buscar filme do catálogo pelo id interno (movieId)
+GET {{base}}/catalog/movies/1
+
+### Sortear dois filmes distintos (usado pelo battle-service)
+GET {{base}}/catalog/movies/random-pair
+
+### --- Casos de erro ---
+
+### 400: query vazia
+GET {{base}}/catalog/movies/search?query=
+
+### 400: externalId ausente
+POST {{base}}/catalog/movies
+Content-Type: application/json
+
+{}
+
+### 404: filme inexistente no TMDB
+POST {{base}}/catalog/movies
+Content-Type: application/json
+
+{
+  "externalId": 999999999
+}
+
+### 404: filme inexistente no catálogo
+GET {{base}}/catalog/movies/99999
