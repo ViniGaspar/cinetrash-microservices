@@ -64,7 +64,7 @@ public class BattleService {
 			chosenMovie.movieId(),
 			chosenMovie.externalId(),
 			chosenMovie.title(),
-			chosenMovie.posterpath(),
+			chosenMovie.posterPath(),
 			chosenMovie.releaseYear()
 		);
 		

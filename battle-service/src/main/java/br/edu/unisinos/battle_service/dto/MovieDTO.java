@@ -4,6 +4,6 @@ public record MovieDTO(
 		Long movieId,
 		Long externalId,
 		String title,
-		String posterpath,
-		int releaseYear
+		String posterPath,
+		Integer releaseYear
 ){}
