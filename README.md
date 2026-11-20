@@ -211,16 +211,6 @@ Análogo para os demais (battle_db, ranking_db), portas 8082/8083. Todos os serv
 5. Ranking top 10: `ORDER BY badness_count DESC, last_vote_at DESC LIMIT 10`.
 6. Desempate por último voto mais recente.
 
-## Perguntas em aberto (para o grupo decidir)
-
-- Precisam de endpoint para remover/editar filme do catálogo?
-- O battle-service deve persistir batalhas ou apenas orquestrar em memória? (proposto: persistir para auditoria)
-- Formato de erro padrão (ProblemDetail RFC 7807) ou JSON simples `{ "message": ... }`?
-- Versionamento da API (`/v1/...`)?
-- Testes: apenas unitários ou também integração com Testcontainers?
-- Precisam de Swagger/OpenAPI em cada serviço?
-- O ranking deve exibir também o total de votos global?
-
 ## Como rodar (sem Docker)
 
 1. Instalar PostgreSQL local e criar databases: `catalog_db`, `battle_db`, `ranking_db`.
