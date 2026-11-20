@@ -8,11 +8,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import br.edu.unisinos.battle_service.dto.RankingVoteDTO;
 
-// @FeignClient(name = "RANKING-SERVICE")
+@FeignClient(name = "RANKING-SERVICE")
 public interface RankingClient {
 	@PostMapping("/ranking/votes")
 	void registerVote(@RequestBody RankingVoteDTO vote);
 	
-	@DeleteMapping("/ranking/votes/lastest/{movieId}")
+	@DeleteMapping("/ranking/votes/latest/{movieId}")
 	void revertVote(@PathVariable Long movieId);
 }
